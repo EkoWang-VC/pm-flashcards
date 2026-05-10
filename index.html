@@ -31,7 +31,7 @@
     --yellow-bg: rgba(245,158,11,0.1);
     --red-bg: rgba(239,68,68,0.1);
     --card-w: min(640px, 94vw);
-    --card-h: clamp(280px, 42vh, 400px);
+    --card-h: 360px;
     --radius: 16px;
     --font: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans SC', system-ui, sans-serif;
     --mono: ui-monospace, 'SF Mono', Menlo, Monaco, 'Cascadia Mono', monospace;
@@ -44,7 +44,7 @@
     font-family: var(--font);
     background: var(--bg);
     color: var(--text);
-    min-height: 100dvh;
+    min-height: 100vh;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -339,7 +339,7 @@
 
   /* ── Mobile layout ── */
   @media (max-width: 600px) {
-    :root { --card-h: clamp(260px, 45svh, 340px); }
+    :root { --card-h: 300px; }
 
     body {
       padding-bottom: calc(148px + env(safe-area-inset-bottom));
