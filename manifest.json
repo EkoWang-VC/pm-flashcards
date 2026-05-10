@@ -1,0 +1,14 @@
+{
+  "name": "项目风险管理 · 量化分析闪卡",
+  "short_name": "量化闪卡",
+  "description": "75张闪卡，覆盖10个量化分析方法，支持进度追踪",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f1117",
+  "theme_color": "#0f1117",
+  "lang": "zh-Hans",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

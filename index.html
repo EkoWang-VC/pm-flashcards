@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0f1117">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="量化闪卡">
+<meta name="description" content="项目风险管理量化分析闪卡 — 75张，支持进度追踪">
+<link rel="manifest" href="manifest.json">
+<title>项目风险管理 · 量化分析闪卡</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}],throwOnError:false})"></script>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #252836;
+    --border: #2e3347;
+    --text: #e8eaf0;
+    --text-muted: #7c8299;
+    --accent: #5b6af5;
+    --accent-glow: rgba(91,106,245,0.18);
+    --green: #22c55e;
+    --yellow: #f59e0b;
+    --red: #ef4444;
+    --green-bg: rgba(34,197,94,0.1);
+    --yellow-bg: rgba(245,158,11,0.1);
+    --red-bg: rgba(239,68,68,0.1);
+    --card-w: min(640px, 94vw);
+    --card-h: clamp(280px, 42vh, 400px);
+    --radius: 16px;
+    --font: 'Noto Sans SC', system-ui, sans-serif;
+    --mono: 'JetBrains Mono', monospace;
+    --ctrl-h: 0px; /* overridden on mobile */
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 16px 32px;
+    padding-bottom: max(32px, env(safe-area-inset-bottom));
+    overflow-x: hidden;
+  }
+
+  /* ── Header ── */
+  header {
+    width: 100%;
+    max-width: 720px;
+    margin-bottom: 16px;
+  }
+  header h1 {
+    font-size: clamp(1rem, 4vw, 1.25rem);
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.01em;
+  }
+  header p { font-size: 0.78rem; color: var(--text-muted); margin-top: 2px; }
+
+  /* ── Stats bar ── */
+  .stats {
+    width: 100%;
+    max-width: 720px;
+    display: flex;
+    gap: 10px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+  .stat {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 7px 12px;
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .stat strong { font-size: 1rem; font-weight: 700; }
+  .stat.known strong { color: var(--green); }
+  .stat.unknown strong { color: var(--red); }
+  .stat.total strong { color: var(--accent); }
+
+  /* ── Progress ── */
+  .progress-wrap {
+    width: 100%;
+    max-width: 720px;
+    margin-bottom: 14px;
+  }
+  .progress-bar {
+    height: 5px;
+    background: var(--surface2);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent) 0%, var(--green) 100%);
+    border-radius: 999px;
+    transition: width 0.4s cubic-bezier(.4,0,.2,1);
+  }
+  .progress-label {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  /* ── Filters ── */
+  .filters {
+    width: 100%;
+    max-width: 720px;
+    display: flex;
+    gap: 7px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+  .filter-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 5px 11px;
+    font-size: 0.73rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-family: var(--font);
+    transition: all 0.15s;
+    white-space: nowrap;
+    user-select: none;
+  }
+  .filter-btn:hover { background: var(--surface2); color: var(--text); }
+  .filter-btn.active {
+    background: var(--accent-glow);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .filter-btn.prio-green.active { background: var(--green-bg); border-color: var(--green); color: var(--green); }
+  .filter-btn.prio-yellow.active { background: var(--yellow-bg); border-color: var(--yellow); color: var(--yellow); }
+  .filter-btn.prio-red.active { background: var(--red-bg); border-color: var(--red); color: var(--red); }
+
+  /* ── Card stage ── */
+  .stage {
+    perspective: 1200px;
+    width: var(--card-w);
+    height: var(--card-h);
+    position: relative;
+    margin-bottom: 16px;
+    cursor: pointer;
+    flex-shrink: 0;
+    touch-action: pan-y;
+  }
+  .card-inner {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.5s cubic-bezier(.4,0,.2,1);
+    will-change: transform;
+  }
+  .card-inner.flipped { transform: rotateY(180deg); }
+
+  /* swipe animation */
+  .card-inner.slide-left  { animation: slideLeft  0.22s ease forwards; }
+  .card-inner.slide-right { animation: slideRight 0.22s ease forwards; }
+  @keyframes slideLeft  { from { transform: translateX(0); opacity:1; } to { transform: translateX(-40px); opacity:0; } }
+  @keyframes slideRight { from { transform: translateX(0); opacity:1; } to { transform: translateX( 40px); opacity:0; } }
+
+  .card-face {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    border-radius: var(--radius);
+    padding: clamp(18px, 4vw, 28px) clamp(18px, 5vw, 32px);
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    overflow: hidden;
+  }
+  .card-face.front { transform: rotateY(0deg); z-index: 2; }
+  .card-face.back  { transform: rotateY(180deg); background: var(--surface2); z-index: 1; }
+  .card-inner.flipped .card-face.front { z-index: 1; }
+  .card-inner.flipped .card-face.back  { z-index: 2; }
+
+  /* tap ripple hint on front */
+  .card-face.front::after {
+    content: '点击翻牌';
+    position: absolute;
+    bottom: 52px;
+    right: 16px;
+    font-size: 0.62rem;
+    color: var(--text-muted);
+    opacity: 0.6;
+    pointer-events: none;
+  }
+  .card-inner.flipped .card-face.front::after { display: none; }
+
+  .card-label {
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    opacity: 0.5;
+  }
+  .card-face.front .card-label { color: var(--accent); }
+  .card-face.back  .card-label { color: var(--green); }
+
+  .card-content {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    font-size: clamp(0.88rem, 2.4vw, 1rem);
+    line-height: 1.65;
+    color: var(--text);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .card-content-inner { width: 100%; }
+  .card-content-inner .katex { font-size: 1.05em; }
+  .card-content-inner .katex-display { margin: 8px 0; }
+
+  .card-meta {
+    margin-top: 12px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    flex-wrap: wrap;
+  }
+  .badge {
+    font-size: 0.63rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    padding: 2px 8px;
+    border-radius: 6px;
+    text-transform: uppercase;
+  }
+  .badge.cat { background: var(--surface2); color: var(--text-muted); border: 1px solid var(--border); }
+  .card-face.back .badge.cat { background: var(--bg); }
+  .badge.prio-green  { background: var(--green-bg);  color: var(--green); }
+  .badge.prio-yellow { background: var(--yellow-bg); color: var(--yellow); }
+  .badge.prio-red    { background: var(--red-bg);    color: var(--red); }
+  .card-num { font-size: 0.66rem; color: var(--text-muted); margin-left: auto; font-family: var(--mono); }
+
+  /* ── Controls (desktop inline) ── */
+  .controls-wrap {
+    width: 100%;
+    max-width: 720px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .ctrl-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 9px 18px;
+    font-size: 0.82rem;
+    color: var(--text);
+    cursor: pointer;
+    font-family: var(--font);
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    user-select: none;
+    min-height: 42px;
+  }
+  .ctrl-btn:hover  { background: var(--surface2); }
+  .ctrl-btn:active { opacity: 0.7; }
+  .ctrl-btn:disabled { opacity: 0.3; cursor: default; }
+  .ctrl-btn.know    { border-color: var(--green);  color: var(--green); }
+  .ctrl-btn.know:hover    { background: var(--green-bg); }
+  .ctrl-btn.unknown { border-color: var(--red);    color: var(--red); }
+  .ctrl-btn.unknown:hover { background: var(--red-bg); }
+  .ctrl-btn.shuffle { border-color: var(--yellow); color: var(--yellow); }
+  .ctrl-btn.shuffle:hover { background: var(--yellow-bg); }
+
+  /* ── Hint ── */
+  .hint {
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    text-align: center;
+    letter-spacing: 0.02em;
+    margin-bottom: 20px;
+  }
+  kbd {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-family: var(--mono);
+    font-size: 0.66rem;
+  }
+  .hint.touch-hint { display: none; }
+
+  /* ── Empty state ── */
+  .empty {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    text-align: center;
+    padding: 40px;
+  }
+
+  /* ── Scrollbar ── */
+  .card-content::-webkit-scrollbar { width: 4px; }
+  .card-content::-webkit-scrollbar-track { background: transparent; }
+  .card-content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* ── Mobile layout ── */
+  @media (max-width: 600px) {
+    :root { --card-h: clamp(260px, 45svh, 340px); }
+
+    body {
+      padding-bottom: calc(148px + env(safe-area-inset-bottom));
+    }
+
+    .hint.keyboard-hint { display: none; }
+    .hint.touch-hint {
+      display: block;
+      font-size: 0.68rem;
+      margin-bottom: 8px;
+    }
+
+    /* sticky bottom action bar */
+    .controls-wrap {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      max-width: 100%;
+      margin: 0;
+      padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+      background: var(--bg);
+      border-top: 1px solid var(--border);
+      gap: 8px;
+      z-index: 100;
+    }
+
+    .controls { gap: 8px; }
+
+    .ctrl-btn {
+      padding: 10px 14px;
+      font-size: 0.8rem;
+      border-radius: 10px;
+      flex: 1;
+      justify-content: center;
+      min-height: 44px; /* iOS min tap target */
+    }
+    /* Nav row: prev/next take less flex */
+    .controls.nav-row .ctrl-btn { flex: 0 1 auto; padding: 10px 18px; }
+    .controls.action-row .ctrl-btn.know,
+    .controls.action-row .ctrl-btn.unknown { flex: 2; }
+    .controls.action-row .ctrl-btn.shuffle,
+    .controls.action-row .ctrl-btn { flex: 1; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>项目风险管理 · 量化分析闪卡</h1>
+  <p>75 张 · 10 个方法类别 · 基于课件 2-5、3-6、3-7 章</p>
+</header>
+
+<div class="stats">
+  <div class="stat total"><strong id="statTotal">0</strong> 当前筛选</div>
+  <div class="stat known"><strong id="statKnown">0</strong> 已掌握</div>
+  <div class="stat unknown"><strong id="statUnknown">0</strong> 待复习</div>
+</div>
+
+<div class="progress-wrap">
+  <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+  <div class="progress-label"><span id="progressLabel">0 / 0 已复习</span><span id="progressPct">0%</span></div>
+</div>
+
+<div class="filters" id="filters">
+  <button class="filter-btn active" data-filter="all">全部</button>
+  <button class="filter-btn" data-filter="cat:概率基础">概率基础</button>
+  <button class="filter-btn" data-filter="cat:盈亏平衡">盈亏平衡</button>
+  <button class="filter-btn" data-filter="cat:敏感性分析">敏感性分析</button>
+  <button class="filter-btn" data-filter="cat:决策树EMV">决策树EMV</button>
+  <button class="filter-btn" data-filter="cat:贝叶斯">贝叶斯</button>
+  <button class="filter-btn" data-filter="cat:FTA故障树">FTA故障树</button>
+  <button class="filter-btn" data-filter="cat:PERT">PERT</button>
+  <button class="filter-btn" data-filter="cat:GERT">GERT</button>
+  <button class="filter-btn" data-filter="cat:AHP">AHP</button>
+  <button class="filter-btn" data-filter="cat:不确定型决策">不确定型决策</button>
+  <button class="filter-btn prio-green"  data-filter="prio:green">🟢 低难</button>
+  <button class="filter-btn prio-yellow" data-filter="prio:yellow">🟡 中难</button>
+  <button class="filter-btn prio-red"    data-filter="prio:red">🔴 高难</button>
+  <button class="filter-btn" data-filter="status:unknown">待复习</button>
+</div>
+
+<div class="stage" id="stage">
+  <div class="card-inner" id="cardInner">
+    <div class="card-face front">
+      <div class="card-label">问题</div>
+      <div class="card-content"><div class="card-content-inner" id="frontContent"></div></div>
+      <div class="card-meta">
+        <span class="badge cat" id="frontCat"></span>
+        <span class="badge" id="frontPrio"></span>
+        <span class="card-num" id="frontNum"></span>
+      </div>
+    </div>
+    <div class="card-face back">
+      <div class="card-label">答案</div>
+      <div class="card-content"><div class="card-content-inner" id="backContent"></div></div>
+      <div class="card-meta">
+        <span class="badge cat" id="backCat"></span>
+        <span class="badge" id="backPrio"></span>
+        <span class="card-num" id="backNum"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="hint touch-hint">← 左滑下一张 · 右滑上一张 · 点击翻牌</div>
+<div class="hint keyboard-hint">
+  <kbd>Space</kbd> 翻牌 &nbsp;
+  <kbd>←</kbd> 上一张 &nbsp;
+  <kbd>→</kbd> 下一张 &nbsp;
+  <kbd>K</kbd> 已掌握 &nbsp;
+  <kbd>U</kbd> 待复习
+</div>
+
+<div id="emptyState" class="empty" style="display:none">当前筛选无卡片，请更换过滤条件。</div>
+
+<!-- Controls: on desktop inline, on mobile fixed bottom -->
+<div class="controls-wrap">
+  <div class="controls nav-row">
+    <button class="ctrl-btn" id="btnPrev" onclick="prevCard()">← 上一张</button>
+    <button class="ctrl-btn shuffle" onclick="shuffle()">⇄ 随机</button>
+    <button class="ctrl-btn" onclick="resetAll()">↺ 重置</button>
+    <button class="ctrl-btn" id="btnNext" onclick="nextCard()">下一张 →</button>
+  </div>
+  <div class="controls action-row">
+    <button class="ctrl-btn unknown" onclick="markUnknown()">✗ 待复习</button>
+    <button class="ctrl-btn know" onclick="markKnown()">✓ 已掌握</button>
+  </div>
+</div>
+
+<script>
+const CARDS = [
+  // 概率基础 (prio: green)
+  {q:"在项目管理领域中，如何理解"风险"这一概念？",a:"风险被视为可测定概率的不确定性。",cat:"概率基础",prio:"green"},
+  {q:"根据有限资料和经验合理估计得出的概率称为什么？",a:"主观概率。",cat:"概率基础",prio:"green"},
+  {q:"客观概率主要来源于哪两个定义？",a:"古典概率和概率的统计定义。",cat:"概率基础",prio:"green"},
+  {q:"古典概率公式为 $P(A) = \\frac{m}{N}$，其中 $m$ 代表什么？",a:"事件 $A$ 包含的等可能性基本后果个数。",cat:"概率基础",prio:"green"},
+  {q:"在不变条件下重复试验，$N$ 次中事件 $A$ 发生 $n$ 次，当 $N$ 趋于无穷大时，$n/N$ 的极限称为什么？",a:"概率的统计定义。",cat:"概率基础",prio:"green"},
+  {q:"概率公理规定，任何事件 $A$ 的概率 $P(A)$ 的取值范围是多少？",a:"$0 \\le P(A) \\le 1$",cat:"概率基础",prio:"green"},
+  {q:"若事件 $A$ 发生必然导致事件 $B$ 发生，则称 $B$ 与 $A$ 具有什么关系？",a:"包含关系（$A \\subset B$）。",cat:"概率基础",prio:"green"},
+  {q:"事件的"和"表示两个事件 $A$ 与 $B$ 中满足什么条件？",a:"至少有一个发生。",cat:"概率基础",prio:"green"},
+  {q:"如果事件 $A$、$B$ 不能同时出现，即 $AB = \\varnothing$（空集），则称这两个事件为什么？",a:"互不相容事件（或互斥事件）",cat:"概率基础",prio:"green"},
+  {q:"对于任意两事件 $A$ 与 $B$，概率加法的一般公式是什么？",a:"$P(A+B) = P(A) + P(B) - P(AB)$",cat:"概率基础",prio:"green"},
+  {q:"在事件 $B$ 已发生的条件下，事件 $A$ 发生的概率记为什么？",a:"条件概率 $P(A|B)$",cat:"概率基础",prio:"green"},
+  {q:"条件概率的计算公式为 $P(A|B) = $ ___？",a:"$\\dfrac{P(AB)}{P(B)}$（其中 $P(B) > 0$）",cat:"概率基础",prio:"green"},
+  {q:"若两事件 $A, B$ 相互独立，则积事件的概率 $P(AB) = $ ___？",a:"$P(A)P(B)$",cat:"概率基础",prio:"green"},
+  {q:"离散型随机变量的期望值 $E$ 反映了什么？",a:"随机试验无限次重复后所能期望得到的平均值。",cat:"概率基础",prio:"green"},
+  {q:"随机变量的方差 $\\sigma^2$ 表示的是什么？",a:"随机变量的取值与其期望值的偏离程度（离散程度）。",cat:"概率基础",prio:"green"},
+  {q:"风险度（$FD$）的计算公式是什么？",a:"$FD = \\dfrac{\\sqrt{D(x)}}{E(x)}$（标准差除以期望值）",cat:"概率基础",prio:"green"},
+  {q:"常用于描述概率变化不太大、灵敏度不高事物的概率分布是什么？",a:"均匀分布",cat:"概率基础",prio:"green"},
+  {q:"三角分布在项目风险估计中需要哪三个关键数值？",a:"最小值（$a$）、最可能值（$c$）和最大值（$b$）。",cat:"概率基础",prio:"green"},
+  {q:"指数分布常用于描述什么事物的寿命？",a:"电子元器件或复杂系统。",cat:"概率基础",prio:"green"},
+  {q:"指数分布的一个重要特性是，在描述产品寿命时具有什么特性？",a:"无记忆性",cat:"概率基础",prio:"green"},
+  {q:"标准正态分布的均值 $\\mu$ 和方差 $\\sigma^2$ 分别是多少？",a:"$\\mu = 0$ 且 $\\sigma^2 = 1$",cat:"概率基础",prio:"green"},
+  {q:"二项分布适用于哪种类型的试验？",a:"$n$ 次相互独立的贝努里试验（只有两种对立结果）。",cat:"概率基础",prio:"green"},
+  {q:"切贝雪夫不等式 $P(|X - E(X)| \\ge \\epsilon) \\le \\frac{D(X)}{\\epsilon^2}$ 的主要意义是什么？",a:"在分布未知的情况下估计事件落入期望值附近区间的概率。",cat:"概率基础",prio:"red"},
+  {q:"贝努里大数定理说明，当试验次数 $n$ 无限增大时，事件发生的频率逐渐稳定于其___？",a:"概率 $p$",cat:"概率基础",prio:"red"},
+  {q:"中心极限定理指出，当 $n$ 很大时，相互独立且服从同一分布的随机变量之和近似服从___？",a:"正态分布",cat:"概率基础",prio:"red"},
+  // 盈亏平衡
+  {q:"盈亏平衡分析（BEP）又被称为什么？",a:"本量利分析（或损益平衡分析）",cat:"盈亏平衡",prio:"green"},
+  {q:"在盈亏平衡点上，项目的盈利 $S$ 等于多少？",a:"0（既无盈利也无亏损）。",cat:"盈亏平衡",prio:"green"},
+  {q:"盈亏平衡点产量的计算公式是什么？",a:"$Q_0 = \\dfrac{D}{R - V}$（$D$ 为固定成本，$R$ 为单价，$V$ 为单位可变成本）",cat:"盈亏平衡",prio:"green"},
+  // 敏感性分析
+  {q:"通过分析制约因素变化引起评价指标变化的幅度来确认风险承受能力的方法是什么？",a:"敏感性分析",cat:"敏感性分析",prio:"yellow"},
+  {q:"敏感性分析中，能使方案变得不可接受的分析因素数值称为什么？",a:"临界值。",cat:"敏感性分析",prio:"yellow"},
+  // 决策树EMV
+  {q:"决策树中的方形结点（□）代表什么意思？",a:"决策点（引出方案分枝）。",cat:"决策树EMV",prio:"green"},
+  {q:"决策树中的圆形结点（○）代表什么意思？",a:"状态节点（或机会节点，引出概率分枝）。",cat:"决策树EMV",prio:"green"},
+  {q:"决策树法计算期望损益值时，计算方向是什么？",a:"由右向左（逆向）",cat:"决策树EMV",prio:"green"},
+  // 贝叶斯
+  {q:"贝叶斯决策的核心是通过补充信息来修正对事件概率的估计，计算出什么？",a:"后验概率分布",cat:"贝叶斯",prio:"yellow"},
+  {q:"全概率公式的作用是什么？",a:"通过对样本空间的划分，计算某一复杂事件发生的总概率。",cat:"贝叶斯",prio:"yellow"},
+  {q:"贝叶斯公式 $P(A|B) = $ ___？",a:"$\\dfrac{P(A)P(B|A)}{P(B)}$",cat:"贝叶斯",prio:"yellow"},
+  // FTA故障树
+  {q:"故障树分析（FTA）中，顶上事件通常是什么？",a:"系统最不希望发生的故障（或事故）。",cat:"FTA故障树",prio:"yellow"},
+  {q:"故障树中的"或门"代表什么逻辑关系？",a:"任一输入事件发生，输出事件即发生。",cat:"FTA故障树",prio:"yellow"},
+  {q:"故障树中的"与门"代表什么逻辑关系？",a:"所有输入事件必须同时发生，输出事件才发生。",cat:"FTA故障树",prio:"yellow"},
+  {q:"导致故障树顶事件发生的底事件的最小集合称为什么？",a:"最小割集。",cat:"FTA故障树",prio:"yellow"},
+  {q:"研究最小割集的主要目的是为了找出系统的什么？",a:"薄弱环节（或故障模式）",cat:"FTA故障树",prio:"yellow"},
+  // PERT
+  {q:"计划评审技术（PERT）主要用于哪类项目？",a:"从未经历过的科研或新产品开发项目（非肯定型）。",cat:"PERT",prio:"yellow"},
+  {q:"PERT 技术中，工序平均完工时间的三点估算公式是什么？",a:"$\\mu = \\dfrac{a + 4m + b}{6}$（$a$ 乐观，$m$ 最可能，$b$ 悲观）\n\n直觉：m 投 4 票，a/b 各 1 票，总票数 6 → 加权平均",cat:"PERT",prio:"yellow"},
+  {q:"PERT 技术中，工序时间的方差 $\\sigma^2$ 估算公式是什么？",a:"$$\\sigma^2 = \\frac{(b - a)^2}{36}$$\n\n注意：方差是 $[(b-a)/6]^2$，不是 $(b-a)/6$",cat:"PERT",prio:"yellow"},
+  {q:"在 PERT 网络图中，自由时差为零的路径被称作什么？",a:"关键路径",cat:"PERT",prio:"yellow"},
+  // GERT
+  {q:"图形评审技术（GERT）与 PERT 的主要区别是什么？",a:"GERT 允许网络中出现循环回路且结点具有不同的逻辑输入/输出性质。",cat:"GERT",prio:"red"},
+  {q:"GERT 结点输入类型中，"异或"型（Exclusive-Or）表示什么？",a:"多个内向活动中有且只有一项活动实现时，结点才实现。",cat:"GERT",prio:"red"},
+  {q:"GERT 的输出部分若为"概率型"，意味着什么？",a:"结点实现后，其发出的外向活动中只有一项能进行，且具有一定的概率。",cat:"GERT",prio:"red"},
+  // AHP
+  {q:"层次分析法（AHP）是由谁提出的？",a:"美国运筹学家萨蒂（Saaty）。",cat:"AHP",prio:"yellow"},
+  {q:"AHP 递阶层次结构模型通常分为哪三个层次？",a:"目标层、准则层、方案层。",cat:"AHP",prio:"yellow"},
+  {q:"在 AHP 中，两两比较标度 1、3、5、7、9 分别代表什么？",a:"同等重要、稍微重要、重要、重要得多、绝对重要。",cat:"AHP",prio:"yellow"},
+  {q:"判断矩阵满足 $a_{ij} > 0$ 且 $a_{ij} = 1/a_{ji}$，这类矩阵被称为什么？",a:"正互反矩阵。",cat:"AHP",prio:"yellow"},
+  {q:"AHP 中，一致性指标 $C.I.$ 的计算公式是什么？",a:"$C.I. = \\dfrac{\\lambda_{max} - n}{n - 1}$",cat:"AHP",prio:"yellow"},
+  {q:"AHP 中，一致性比例 $C.R.$ 等于 $C.I.$ 除以什么？",a:"随机一致性指标 $R.I.$",cat:"AHP",prio:"yellow"},
+  {q:"在 AHP 决策中，当一致性比例 $C.R. <$ ___ 时，认为判断矩阵通过一致性检验？",a:"0.1\n\n直觉：CR 是"打分有多矛盾"的测量值，< 0.1 = 逻辑基本一致",cat:"AHP",prio:"yellow"},
+  {q:"在 AHP 中，为了简化特征向量计算，精度要求不高时可采用什么方法？",a:"和法（列和归一化法）或根法",cat:"AHP",prio:"yellow"},
+  // 不确定型决策
+  {q:"在不确定型决策原则中，拉普拉斯（Laplace）法假设每种状态发生的概率___？",a:"相等（视每个状态为等概率）",cat:"不确定型决策",prio:"green"},
+  {q:"悲观准则（Wald 法）又称为什么？",a:"最大最小法（从最坏结局中选最优）。",cat:"不确定型决策",prio:"green"},
+  {q:"乐观准则（Maximax 法）的操作方式是什么？",a:"大中取大（选择所有方案中收益最高的）。",cat:"不确定型决策",prio:"green"},
+  {q:"折衷准则（Hurwicz 法）通过引入什么系数来平衡乐观与悲观？",a:"折衷系数 $\\alpha$，公式：$H = \\alpha \\cdot 最大 + (1-\\alpha) \\cdot 最小$，取最大的 H",cat:"不确定型决策",prio:"green"},
+  {q:"萨凡奇（Savage）法又被称为什么？",a:"最小后悔值准则",cat:"不确定型决策",prio:"green"},
+  {q:"Savage 法中"后悔值"是如何定义的？",a:"某一状态下理想收益与该方案实际收益的差值。\n\n步骤：① 每列最大值减各数 → 后悔矩阵；② 每行取最大后悔值；③ 选最小的。",cat:"不确定型决策",prio:"green"},
+  // 其他
+  {q:"综合评价中，如果对各指标赋予不同的重要程度，通常采用什么方法？",a:"加权平均法。",cat:"不确定型决策",prio:"green"},
+  {q:"效用函数 $U(x)$ 中的 $x$ 通常代表什么？",a:"可量化的风险事件后果（如损益值金额）。",cat:"决策树EMV",prio:"green"},
+  {q:"概率分析中，矩母函数 $M_t(s)$ 的定义是什么？",a:"$M_t(s) = E\\{e^{st}\\}$",cat:"GERT",prio:"red"},
+  {q:"当 $t$ 服从指数分布（参数 $\\lambda$）时，其矩母函数 $M_t(s) = $ ___？",a:"$(1 - s\\lambda^{-1})^{-1}$",cat:"GERT",prio:"red"},
+  {q:"GERT 的分析计算中，利用等效函数求整个网络的实现概率 $P_E$ 的公式是什么？",a:"$P_E = W_E(0)$",cat:"GERT",prio:"red"},
+  {q:"GERT 网络总时间期望值 $T_E$ 可以通过等效函数 $M_E(s)$ 的什么运算求得？",a:"对 $s$ 求一阶导数并令 $s=0$",cat:"GERT",prio:"red"},
+  {q:"在风险管理中，非确定性信息除了随机性外，还包括哪两类？",a:"模糊性、灰色性。",cat:"概率基础",prio:"green"},
+  {q:"概念外延不明确、存在"亦此亦彼性"的信息体现了信息的什么特征？",a:"模糊性",cat:"概率基础",prio:"green"},
+  {q:"部分已知、部分未知的信息特征被称作什么？",a:"灰色性",cat:"概率基础",prio:"green"},
+  {q:"质量管理中，若样板值在 $(\\mu-3\\sigma, \\mu+3\\sigma)$ 之外，说明生产状态如何？",a:"异常（$3\\sigma$ 法则：99.73% 的数据落在均值 ±3 个标准差范围内）",cat:"概率基础",prio:"red"},
+  {q:"回归分析一般用于预测因变量 $Y$ 与自变量 $X$ 之间的什么关系？",a:"相互关系（线性/非线性回归方程，用最小二乘法估计系数）",cat:"FTA故障树",prio:"yellow"},
+  {q:"故障树中，"顶上事件"到"底事件"的逐级向下寻查方法被称为什么？",a:"下行法",cat:"FTA故障树",prio:"yellow"},
+  {q:"计算最小割集时，若遇到"与门"，应将输入事件排在哪里？",a:"同一行（AND 门 → 同行展开，OR 门 → 分行展开）",cat:"FTA故障树",prio:"yellow"},
+];
+
+// ── State ──
+let deck = [...CARDS.keys()];
+let pos = 0;
+let flipped = false;
+let filter = 'all';
+let status = {};
+try { status = JSON.parse(localStorage.getItem('pm-flash-v1') || '{}'); } catch { status = {}; }
+
+function save() {
+  try { localStorage.setItem('pm-flash-v1', JSON.stringify(status)); } catch {}
+}
+
+function applyFilter() {
+  deck = CARDS.map((_, i) => i).filter(i => {
+    const c = CARDS[i];
+    if (filter === 'all') return true;
+    if (filter.startsWith('cat:'))   return c.cat === filter.slice(4);
+    if (filter.startsWith('prio:'))  return c.prio === filter.slice(5);
+    if (filter === 'status:unknown') return status[i] !== 'known';
+    return true;
+  });
+  pos = 0; flipped = false;
+  updateCard(); updateStats();
+}
+
+function updateCard() {
+  const inner  = document.getElementById('cardInner');
+  const empty  = document.getElementById('emptyState');
+  const stage  = document.getElementById('stage');
+  if (deck.length === 0) {
+    stage.style.display = 'none'; empty.style.display = 'block'; return;
+  }
+  stage.style.display = 'block'; empty.style.display = 'none';
+  inner.classList.remove('flipped', 'slide-left', 'slide-right');
+  flipped = false;
+
+  const idx = deck[pos];
+  const c   = CARDS[idx];
+  const prioLabel = {green:'🟢 低难', yellow:'🟡 中难', red:'🔴 高难'}[c.prio];
+  const prioClass = 'prio-' + c.prio;
+  const numText   = `${pos + 1} / ${deck.length}`;
+  const st = status[idx];
+  const statusMark = st === 'known' ? ' ✓' : st === 'unknown' ? ' ✗' : '';
+
+  ['front','back'].forEach(face => {
+    const pfx = face;
+    document.getElementById(pfx + 'Content').innerHTML = (face === 'front' ? c.q : c.a).replace(/\n/g, '<br>');
+    document.getElementById(pfx + 'Cat').textContent   = c.cat;
+    const pe = document.getElementById(pfx + 'Prio');
+    pe.textContent = prioLabel + statusMark;
+    pe.className   = 'badge ' + prioClass;
+    document.getElementById(pfx + 'Num').textContent   = numText;
+  });
+
+  renderCardMath();
+  document.getElementById('btnPrev').disabled = pos === 0;
+  document.getElementById('btnNext').disabled = pos === deck.length - 1;
+}
+
+function updateStats() {
+  const total    = deck.length;
+  const known    = deck.filter(i => status[i] === 'known').length;
+  const unk      = deck.filter(i => status[i] === 'unknown').length;
+  const reviewed = deck.filter(i => status[i]).length;
+  document.getElementById('statTotal').textContent   = total;
+  document.getElementById('statKnown').textContent   = known;
+  document.getElementById('statUnknown').textContent = unk;
+  const pct = total ? Math.round(reviewed / total * 100) : 0;
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressLabel').textContent = `${reviewed} / ${total} 已复习`;
+  document.getElementById('progressPct').textContent   = pct + '%';
+}
+
+function flipCard() {
+  flipped = !flipped;
+  document.getElementById('cardInner').classList.toggle('flipped', flipped);
+}
+
+function prevCard() {
+  if (pos > 0) { pos--; updateCard(); }
+}
+function nextCard() {
+  if (pos < deck.length - 1) { pos++; updateCard(); }
+}
+
+function markKnown() {
+  if (!deck.length) return;
+  status[deck[pos]] = 'known'; save(); updateStats(); updateCard();
+  if (pos < deck.length - 1) setTimeout(nextCard, 180);
+}
+function markUnknown() {
+  if (!deck.length) return;
+  status[deck[pos]] = 'unknown'; save(); updateStats(); updateCard();
+  if (pos < deck.length - 1) setTimeout(nextCard, 180);
+}
+function shuffle() {
+  for (let i = deck.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [deck[i], deck[j]] = [deck[j], deck[i]];
+  }
+  pos = 0; flipped = false; updateCard();
+}
+function resetAll() {
+  if (!confirm('确认重置所有进度？')) return;
+  Object.keys(status).forEach(k => delete status[k]);
+  save(); updateCard(); updateStats();
+}
+
+function renderCardMath() {
+  if (!window.renderMathInElement) return;
+  const opts = {
+    delimiters: [
+      {left:'$$', right:'$$', display:true},
+      {left:'$',  right:'$',  display:false}
+    ],
+    throwOnError: false
+  };
+  ['frontContent','backContent'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) renderMathInElement(el, opts);
+  });
+}
+
+// ── Touch swipe ──
+(function setupTouch() {
+  const stage = document.getElementById('stage');
+  let x0 = 0, y0 = 0, t0 = 0;
+
+  stage.addEventListener('touchstart', e => {
+    x0 = e.touches[0].clientX;
+    y0 = e.touches[0].clientY;
+    t0 = Date.now();
+  }, {passive: true});
+
+  stage.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - x0;
+    const dy = e.changedTouches[0].clientY - y0;
+    const dt = Date.now() - t0;
+
+    if (Math.abs(dx) < 12 && Math.abs(dy) < 12 && dt < 300) {
+      flipCard(); return;
+    }
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 48) {
+      if (dx < 0) nextCard();
+      else         prevCard();
+    }
+  }, {passive: true});
+})();
+
+// ── Filters ──
+document.getElementById('filters').addEventListener('click', e => {
+  const btn = e.target.closest('.filter-btn');
+  if (!btn) return;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  filter = btn.dataset.filter;
+  applyFilter();
+});
+
+// ── Keyboard ──
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT') return;
+  if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); flipCard(); }
+  if (e.key === 'ArrowLeft')  prevCard();
+  if (e.key === 'ArrowRight') nextCard();
+  if (e.key === 'k' || e.key === 'K') markKnown();
+  if (e.key === 'u' || e.key === 'U') markUnknown();
+});
+
+// ── Init ──
+function init() { updateCard(); updateStats(); }
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else { init(); }
+window.addEventListener('load', renderCardMath);
+
+// ── PWA service worker ──
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>
