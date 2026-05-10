@@ -469,15 +469,15 @@
   <div class="controls nav-row">
     <button class="ctrl-btn" id="btnPrev" onclick="prevCard()">← 上一张</button>
     <button class="ctrl-btn shuffle" onclick="shuffle()">⇄ 随机</button>
-    <button class="ctrl-btn" onclick="resetAll()">↺ 重置</button>
     <button class="ctrl-btn" id="btnNext" onclick="nextCard()">下一张 →</button>
   </div>
   <div class="controls action-row">
     <button class="ctrl-btn unknown" onclick="markUnknown()">✗ 待复习</button>
     <button class="ctrl-btn know" onclick="markKnown()">✓ 已掌握</button>
   </div>
-  <div class="controls" style="justify-content:center">
-    <button class="ctrl-btn export" onclick="exportProgress()" style="flex:0 1 auto">📤 导出进度链接</button>
+  <div class="controls util-row">
+    <button class="ctrl-btn export" onclick="exportProgress()">📤 导出进度链接</button>
+    <button class="ctrl-btn" onclick="resetAll()">↺ 重置</button>
   </div>
 </div>
 
