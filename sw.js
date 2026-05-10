@@ -1,4 +1,4 @@
-const CACHE = 'pm-flash-v3';
+const CACHE = 'pm-flash-v4';
 const STATIC = [
   'https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css',
   'https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js',
