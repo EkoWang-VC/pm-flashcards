@@ -53,10 +53,17 @@
     overflow-x: hidden;
   }
 
+  /* ── Column wrapper ── */
+  .col {
+    width: 100%;
+    max-width: var(--card-w);
+    display: flex;
+    flex-direction: column;
+  }
+
   /* ── Header ── */
   header {
     width: 100%;
-    max-width: 720px;
     margin-bottom: 16px;
   }
   header h1 {
@@ -70,7 +77,6 @@
   /* ── Stats bar ── */
   .stats {
     width: 100%;
-    max-width: 720px;
     display: flex;
     gap: 10px;
     margin-bottom: 12px;
@@ -94,7 +100,6 @@
   /* ── Progress ── */
   .progress-wrap {
     width: 100%;
-    max-width: 720px;
     margin-bottom: 14px;
   }
   .progress-bar {
@@ -120,7 +125,6 @@
   /* ── Filters ── */
   .filters {
     width: 100%;
-    max-width: 720px;
     display: flex;
     gap: 7px;
     flex-wrap: wrap;
@@ -151,7 +155,7 @@
 
   /* ── Card stage ── */
   .stage {
-    width: var(--card-w);
+    width: 100%;
     height: var(--card-h);
     position: relative;
     margin-bottom: 16px;
@@ -237,7 +241,6 @@
   /* ── Controls (desktop inline) ── */
   .controls-wrap {
     width: 100%;
-    max-width: 720px;
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -387,10 +390,11 @@
 </style>
 </head>
 <body>
+<div class="col">
 
 <header>
   <h1>项目风险管理 · 量化分析闪卡</h1>
-  <p>75 张 · 10 个方法类别 · 基于课件 2-5、3-6、3-7 章</p>
+  <p>30 张 · 14 个方法类别 · 基于课件 2-5、3-6、3-7 章</p>
 </header>
 
 <div class="stats">
@@ -476,6 +480,8 @@
     <button class="ctrl-btn export" onclick="exportProgress()" style="flex:0 1 auto">📤 导出进度链接</button>
   </div>
 </div>
+
+</div><!-- /.col -->
 <div class="toast" id="toast"></div>
 
 <script>
