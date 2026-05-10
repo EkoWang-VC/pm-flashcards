@@ -1,7 +1,7 @@
 {
   "name": "项目风险管理 · 量化分析闪卡",
   "short_name": "量化闪卡",
-  "description": "75张闪卡，覆盖10个量化分析方法，支持进度追踪",
+  "description": "30张概念公式卡，覆盖14个量化分析方法，支持进度追踪",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0f1117",
