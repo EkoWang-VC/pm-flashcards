@@ -335,6 +335,23 @@
     padding: 40px;
   }
 
+  /* ── Card status corner badge ── */
+  .card-status-badge {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 6px;
+    z-index: 10;
+    pointer-events: none;
+    display: none;
+    letter-spacing: 0.04em;
+  }
+  .card-status-badge.known  { display: block; background: var(--green-bg);  color: var(--green); border: 1px solid var(--green); }
+  .card-status-badge.unknown{ display: block; background: var(--red-bg);    color: var(--red);   border: 1px solid var(--red);   }
+
   /* ── Scrollbar ── */
   .card-content::-webkit-scrollbar { width: 4px; }
   .card-content::-webkit-scrollbar-track { background: transparent; }
@@ -428,10 +445,12 @@
   <button class="filter-btn prio-yellow" data-filter="prio:yellow">🟡 中难</button>
   <button class="filter-btn prio-red"    data-filter="prio:red">🔴 高难</button>
   <button class="filter-btn" data-filter="status:unknown">待复习</button>
+  <button class="filter-btn" data-filter="status:known">已掌握</button>
 </div>
 
 <div class="stage" id="stage" onclick="flipCard()">
   <div class="card-inner" id="cardInner">
+    <div class="card-status-badge" id="cardStatusBadge"></div>
     <div class="card-face front">
       <div class="card-label">概念 / 公式</div>
       <div class="card-content"><div class="card-content-inner" id="frontContent"></div></div>
@@ -537,6 +556,7 @@ function applyFilter() {
     if (filter.startsWith('cat:'))   return c.cat === filter.slice(4);
     if (filter.startsWith('prio:'))  return c.prio === filter.slice(5);
     if (filter === 'status:unknown') return status[i] !== 'known';
+    if (filter === 'status:known')   return status[i] === 'known';
     return true;
   });
   pos = 0; flipped = false;
@@ -562,14 +582,16 @@ function updateCard() {
   const prioClass = 'prio-' + c.prio;
   const numText   = `${pos + 1} / ${deck.length}`;
   const st = status[idx];
-  const statusMark = st === 'known' ? ' ✓' : st === 'unknown' ? ' ✗' : '';
+  const badge = document.getElementById('cardStatusBadge');
+  badge.className = 'card-status-badge' + (st ? ' ' + st : '');
+  badge.textContent = st === 'known' ? '✓ 已掌握' : st === 'unknown' ? '✗ 待复习' : '';
 
   ['front','back'].forEach(face => {
     const pfx = face;
     document.getElementById(pfx + 'Content').innerHTML = (face === 'front' ? c.q : c.a).replace(/\n/g, '<br>');
     document.getElementById(pfx + 'Cat').textContent   = c.cat;
     const pe = document.getElementById(pfx + 'Prio');
-    pe.textContent = prioLabel + statusMark;
+    pe.textContent = prioLabel;
     pe.className   = 'badge ' + prioClass;
     document.getElementById(pfx + 'Num').textContent   = numText;
   });
