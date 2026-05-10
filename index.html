@@ -168,7 +168,6 @@
     position: relative;
     transform-style: preserve-3d;
     transition: transform 0.5s cubic-bezier(.4,0,.2,1);
-    will-change: transform;
   }
   .card-inner.flipped { transform: rotateY(180deg); }
 
@@ -444,7 +443,7 @@
   <button class="filter-btn" data-filter="status:unknown">待复习</button>
 </div>
 
-<div class="stage" id="stage">
+<div class="stage" id="stage" onclick="flipCard()">
   <div class="card-inner" id="cardInner">
     <div class="card-face front">
       <div class="card-label">问题</div>
